@@ -2,7 +2,7 @@
 
 \usepackage{verbatim}
 \usepackage{amssymb}
-\usepackage{amsmath} % Used for 'align' environment
+%\usepackage{amsmath} % Used for 'align' environment
 \setcounter{tocdepth}{3}
 \usepackage{graphicx} % Used for inserting pdf as graphics
 \usepackage{float} % Used fo0r 'H' float option in figures
@@ -11,9 +11,15 @@
 \usepackage{textcomp}
 \usepackage{multicol}
 \usepackage{tikz}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usetikzlibrary{positioning}
 \usetikzlibrary{shapes.multipart}
 \usetikzlibrary{shapes.misc} % used for rounded rectangle
+
+\let\proof\relax 
+\let\endproof\relax 
+\usepackage{amsthm}
+
 
 \usepackage{multirow}
 \usepackage{url}
@@ -77,6 +83,7 @@ Hunan University 410082, Changsha, China \\
 }
 
 \newcommand{\ra}{\rightarrow}
+\newcommand{\se}{\text{ }}
 
 \toctitle{Lecture Notes in Computer Science}
 \tocauthor{Authors' Instructions}
@@ -110,16 +117,69 @@ Hunan University 410082, Changsha, China \\
 
 \section{Homogenization of Spiking Neural P Systems} \label{sec-homo}
 
-A \emph{state transition diagram} will be used to represent the activities of a neuron. 
-A \emph{state} is a set of spike counts. For example, the state $\{4,5\}$ represents spike counts 
-$4$ and $5$, the state $\{0,2,4,8,...\}$ represents even spike counts, and the state
-$\{15,20,25,30,35,...\}$ represents spike counts that are multiples of $5$ starting from $15$. 
+\subsection{Representing Neurons as Labelled Transition Systems}
 
-If a neuron has $n$ spikes, the neuron is said to be \emph{in state $S$} if $n \in S$. For example, 
-let $n=10$ be the number spikes in the neuron and $S_a=\{1\}$, $S_b=\{2,4,9,10,...\}$, 
+We will use the concept of \emph{labelled transition systems} to represent the activities (usages of
+rules, receiving spikes) in a neuron.
+
+\begin{definition}[Labelled Transition System]
+A labelled transition system is a tuple $(S, L, \ra)$ where $S$ is a set of states, $L$ is a set of
+labels, and $\ra$ is a relation of labelled transitions ($\ra \subseteq S \times L \times S$). 
+\end{definition}
+
+In the context of SNP systems, a \emph{state} will be a set of natural numbers that represent a set
+of spike counts. For example, the state $\{4,5\}$ represents spike counts $4$ and $5$, the state 
+$\{0,2,4,8,...\}$ represents even spike counts, and the state $\{15,20,25,30,35,...\}$ represents 
+spike counts that are multiples of $5$ greater that or equal to $15$.
+
+We will use \emph{labels} of the form $(\alpha, \beta)$ where $\alpha$ is an integer while $\beta$ 
+represents an action of a rule. In SNP systems, labels with $\alpha<0$ are used for transitions that 
+represent events that involve rule usage while labels with $\alpha>0$ are used for transitions that 
+represent events that involve reception of spikes. $\beta$ represents an action (e.g. spiking, 
+forgetting) of a rule so it value is more relevant to labels with $\alpha < 0$ which represent some
+rule usage. For example, in SNP systems that only use standard spiking rules without delay, the
+label $(-2,a)$ is associated with a spiking rule that consumes $2$ spikes while the label 
+$(-5,\lambda)$ is associated with forgetting rule that consumes $5$ spikes. Labels with $\beta = a$ 
+represent spiking rules while labels with $\beta=\lambda$ represent either forgetting rules or 
+reception of spikes. Since labels with $\alpha > 0$ represent reception of spikes, if there are
+no rule usage involve, we can simply set their $\beta$ components to $\lambda$. For example, the 
+label $(+3,\lambda)$ represents the event where the neuron receives $3$ spikes in one step while the 
+label $(+2,\lambda)$ represents the event where the neuron receives $2$ spikes.
+
+For label $(\alpha,\beta)$, $\alpha \in \mathbb{Z}$ while $\beta \in \mathcal{A}$ where 
+$\mathcal{A}$ is some set of \emph{actions} for a specific SNP system variant. In the previous 
+example, $\mathcal{A} = \{a,\lambda\}$ was used for SNP systems that use standard spiking rules 
+without delay. For SNP systems with extended spiking rules without delay, the set of actions can be
+$\mathcal{A} \subset \mathbb{N}$. $\beta \in \mathcal{A}$ is a natural number that represents the
+number of spikes produced by some extended spiking rule. For example, the label $(-3,2)$ can
+represent a rule the consumes $3$ spikes and produce $2$ spikes while the label $(-5,0)$ is a 
+forgetting rule that consumes $5$ spikes. For an given SNP system variant, the set of labels that 
+will be used is some set $L \subseteq \mathbb{Z} \times \mathcal{A}$ where $\mathcal{A}$ is the 
+set of actions of the rules associated with the SNP system variant.
+
+A \emph{transition} is a tuple of the form $(S_x, (\alpha,\beta), S_y)$ where $S_x$ and $S_y$ are
+states and $(\alpha, \beta)$ is the transition label. The transition $(S_x,(\alpha,\beta),S_y)$ can
+also be written as $S_x \xrightarrow[]{(\alpha,\beta)} S_y$. For SNP systems, since $S_x$ and $S_y$
+are sets of natural numbers representing sets of spike counts and $(\alpha, \beta)$ represents an
+event that might include consumption of spikes and/or reception of spikes, the transition 
+$(S_x, (\alpha,\beta),S_y)$ has a particular form. For the transition $(S_x, (\alpha,\beta),S_y)$,
+the state $S_y$ is defined in terms of state $S_x$ and the $\alpha$ of the transition label,
+$S_y = \{s_x + \alpha\se| \se s_x \in S_x \}$. For example, if $S_x = \{2,4,6,8,...\}$  (set of even 
+numbers) and $\alpha = -1$, then $S_y = \{1,3,5,7,...\}$ (set of odd numbers). Due to this 
+particular form, we can simply write the transition $(S_x, (\alpha,\beta),S_y)$ as 
+$(S_x, (\alpha,\beta))$. The $S_y$ component is already implied. A \emph{transition relation} $\ra$ 
+is simply a set of transitions over a given set of states and set of labels.
+
+We will use a labelled transition system to represent activities associated with a neuron. Each 
+neuron in the system will have its own transition system representation. 
+
+
+If a neuron has $n$ spikes, we will say that the neuron \emph{in state $S$} if $n \in S$. For
+example, let $n=10$ be the number spikes in the neuron and $S_a=\{1\}$, $S_b=\{2,4,9,10,...\}$, 
 $S_c=\{5,10,15,20,...\}$ be states, the neuron is not in state $S_a$ since $n \notin S_a$ but it is
-in state $S_b$ and $S_c$ since $n \in S_a$ and $n \in S_b$. States can intersect since they are 
-sets which means a neuron can be in multiple states at the same time. 
+in state $S_b$ and $S_c$ since $n \in S_a$ and $n \in S_b$. States can intersect since they are sets
+which means a neuron can be in multiple states at the same time. 
+
 
 Most states that are associated with a given neuron represent the regular expressions of the rules
 in the neuron. For example, in Figure \ref{fig-two-neurons}, neuron $1$ have the rules
@@ -215,9 +275,123 @@ text-a/.style={black},
 \label{fig-two-state-diagrams}
 \end{figure}                                                                                            
 
+%===================================================================================================
+
+\subsection{Operations on Labelled Transition Systems}
+
+\begin{definition}[State Translation]
+A state translation is an operation on a state. As a function, it takes a state $S$ and a natural
+number $\delta$ and maps it to the state $S'$ defined as $S' = \{s + \delta\se|\se s \in S\}$. We
+denote state translation with the $+$ symbol. i.e. $S' = S+\delta = \{s + \delta\se|\se s \in S\}$.
+We say that $S'$ is ``$S$ translated by $\delta$".
+\end{definition}
+
+For example, let $S=\{3,5,7\}$ and $\delta = 3$, then $S+3 = \{6,8,10\}$. Let $S = \{3,6,9,12,...\}
+= \{3i\}_{i\geq 1}$ and $\delta = 1$, then $S+1 = \{4,7,10,13,...\}=\{3i+1\}_{i\geq 1}$.
+
+\begin{definition}[Transition Translation]
+A transistion translation is an operation on a transition. The function translate takes a transition
+$T = (S,(\alpha,\beta))$ and a natural number $\delta$ and maps it to the transition 
+$T' = (S',(\alpha,\beta))$ where $S'=S+\delta$ ($S$ (state) translated by $\delta$). If the context
+is clear, we will use the same symbol $+$ for transition translation. i.e. $T' = T +\delta$.
+\end{definition}
+
+
+\begin{definition}[Transition System Translation]
+A transition system translation is an operation on an entire transition system. As a function, it
+takes a transition system $TS=(S,L,\ra)$ and a natural number $\delta$ and maps them to the 
+transition system $TS'=(S',L,\ra')$ where $S'=\{s+\delta\se|\se s \in S\}$ and $\ra' = \{T+\delta
+\se|\se T \in \ra\}$.
+\end{definition}
+
+\begin{definition}[State Scaling]
+State scaling is an operation on a state. As a function, it takes a state $S$ and a natural number
+$\delta$ and maps them to the state $S'$ defined as $S' = \{\delta \cdot s\se|\se s\in S\}$. We say
+that $S'$ is ``$S$ scaled by $\delta$" and we use the notation $\delta S'$ for $S'$.
+\end{definition}
+
+\begin{definition}[Transition Scaling]
+Transition scaling is an operation on a transition. As a function, it takes a transition 
+$T=(S,(\alpha,\beta))$ and a natural number $\delta$ and maps them to the transition 
+$T'=(S',(\alpha',\beta))$ where $S' = \delta S$ and $\alpha' = \delta \alpha$. We say that $T'$
+is ``$T$ scaled by $\delta$" and we use the notation $\delta T$ for $T'$.
+\end{definition}
+
+\begin{definition}[Transition System Scaling]
+\end{definition}
+
+\subsection{Procedures for Homogenizing Neurons' Rule Sets}
+
+\begin{definition}[Matching Transistions]
+\end{definition}
+
+\begin{definition}[Non-deterministic State]
+\end{definition}
+
+\begin{definition}[Common Transition Set]
+\end{definition}
+
+
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\SetKwInput{KwInput}{$TS_1$, $T_2$}
+\SetKwInput{KwOutput}{Output}
+
+\KwInput{Transition alphabet, rules}
+\KwOutput{Write here the result}
+
+$StateSet \leftarrow \{\}$\;
+
+\While{While condition}
+{
+   instructions\;
+   \eIf{condition}
+   {
+      instructions1\;
+      instructions2\;
+   }
+   {
+      instructions3\;
+   }
+}
+ 
+\caption{Combining Two Transitions Systems}
+\end{algorithm}
+
+
 % ================================================================================================================================================== %
 
 \bibliographystyle{splncs03}
 \bibliography{homonegenous-snp}
 
 \end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
