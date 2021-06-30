@@ -707,7 +707,10 @@ that  $n \in p_i$, $n\in p'_j$, and $\ee_i=\ee'_j$.
 
 %===================================================================================================
 
-\begin{algorithm}[H]
+Algorithm \ref{algo-part}
+
+\begin{algorithm}[H]\label{algo-part}
+\caption{$PartitionEventsSet(R):$}
 \SetAlgoLined
 \SetKwInput{KwInput}{Input}
 \SetKwInput{KwOutput}{Output}
@@ -742,12 +745,13 @@ $EV  \leftarrow \{\ee' \se|\se (p',\ee') \in P' \}$ \;
    }
    Add $(p,\ee')$ in $P$ \;
 }
-\caption{$PartitionEventsSet(R):$}
 \end{algorithm}
 
 %===================================================================================================
 
-\begin{algorithm}[H]
+Algorithm \ref{algo-comp}
+
+\begin{algorithm}[H] \label{algo-comp}
 \SetAlgoLined
 \SetKwInput{KwInput}{Input}
 \SetKwInput{KwOutput}{Output}
@@ -771,10 +775,9 @@ $P'_2  \leftarrow \{(p'_1\cap sp_1, \ee'_1),...,(p'_n\cap sp_1, \ee'_m)\}$\;
 
 %===================================================================================================
 
+Algorithm \ref{algo-match}
 
-%===================================================================================================
-
-\begin{algorithm}[H]
+\begin{algorithm}[H]\label{algo-match}
 \SetAlgoLined
 \SetKwInput{KwInput}{Input}
 \SetKwInput{KwOutput}{Output}
@@ -807,7 +810,9 @@ $\overline{\ee'} \leftarrow \{(\alpha'/{min_2},\beta'))\se|\se (\alpha',\beta')\
 
 %===================================================================================================
 
-\begin{algorithm}[H]
+Algorithm \ref{algo-merge}
+
+\begin{algorithm}[H]\label{algo-merge}
 \SetAlgoLined
 \SetKwInput{KwInput}{Input}
 \SetKwInput{KwOutput}{Output}
