@@ -31,6 +31,7 @@
 %\newcommand{\keywords}[1]{\par\addvspace\baselineskip}
 %\noindent\keywordname\enspace\ignorespaces#1}
 \newcommand{\ra}{\rightarrow}
+\newcommand{\ee}{\mathcal{E}}
 \newcommand{\se}{\text{ }}
 \newcommand{\sm}{\text{:}}
 \newcommand{\mn}{\text{-}}
@@ -83,6 +84,12 @@ SNP
 
 \cite{ionescu-2006-snp}
 \cite{chen-2008-snp-e}
+\cite{HSNP}
+\cite{HISNP}
+\cite{HSNP-R}
+
+\cite{HSNP-S}
+\cite{HSNP-A}
 
 SNP VARIANTS
 
@@ -197,7 +204,8 @@ where $n_i$ is the number of spikes in neuron $\sigma_i$ and $d_i \in \mathbb{N}
 number that represents the state of neuron $\sigma_i$. State $d_i=-1$ means the neuron $\sigma_i$ 
 has no active rules. State $d_i=0$ means neuron $\sigma_i$ is open but has an active rule that is 
 about to send spikes. State $d_i > 1$ means neuron $\sigma_i$ is closed and will only open and send 
-spikes after $d_i$ steps. 
+spikes after $d_i$ steps. We call $n_i/d_i$ the \emph{configuration of neuron $\sigma_i$} and the
+$d_i$ component the \emph{delay counter} of neuron $\sigma_i$.
 
 Given the configuration $C=(n_1/d_1,...,n_i/d_i,$ $...,n_m/d_m)$ we can know what events will occur 
 and can occur in the system. An \emph{event} is either a neuron spiking, a neuron applying a rule, 
@@ -270,19 +278,23 @@ A \emph{neuron transition system} (NTS) is a tuple $(S,V, \ra)$ where
 Let $nts = (S,V,\ra)$ be the NTS of some neuron $\sigma_w=(n,R)$. $nts$ is constructed using the 
 rule set $R$ and the possible spike trains going to neuron $w$. For each rule $E/a^{\alpha} \ra 
 \beta$ in $R$, the transition $(N(L(E)),(-\alpha, \beta))$ is an element of the transtion relation 
-$\ra$. $N(L(E))$ is the length set of language $L(E)$. We will call the set that contains neuron $w$ 
-and all neurons \emph{connected to} neuron $w$, all neuron $x$ such that $(x,w) \in syn$, as the 
-\emph{neuron $w$ subsystem}. If it is possible for the neurons connected to neuron $w$ to send 
-$\alpha$ spikes to neuron $w$ while neuron $w$ is \emph{in state $s$} (neuron $w$ has $n$ spikes and
- $n\in s$), then the transition $(s,(\alpha,\lambda))$ is in the transition relation $\ra$. If the 
-transition $(s,(\alpha,\lambda)) \in \ra$ represents neuron $w$ receiving $\alpha$ spikes when 
-neuron $w$ is in state  $s$ and the transition $(s,(\alpha',\beta)) \in \ra$ represents an 
-application of a rule that consumes $\alpha'$ spikes and has action $\beta$ when neuron $w$ is in 
-state $s$, then the transition $(s,(\alpha+\alpha',\beta))$ is also an element of $\ra$. The 
-event $(\alpha+\alpha',\beta)$ actually represents two events, the reception of $\alpha$ spikes and 
-the application of a rule that consumes $\alpha'$ spikes and has action $\beta$. 
+$\ra$. $N(L(E))$ is the length set of language $L(E)$. If it is possible for neuron $w$ to receive 
+$\alpha$ spikes while neuron $w$ is \emph{in state $s$} (neuron $w$ has $n$ spikes and $n\in s$), 
+then the transition $(s,(\alpha,\lambda))$ is in the transition relation $\ra$. If transitions 
+$(s,(\alpha,\lambda))$ and $(s,(\alpha',\beta))$ are both in the transition relation $\ra$, then the 
+transition $(s,(\alpha+\alpha', \beta))$ is also in $\ra$ if $\beta = a^p\sm d$ where $d=0$. 
+Transition $(s,(\alpha',\beta))$ represents a rule application. If the rule has a delay $(d>0)$, 
+then it is not possible for the neuron to receive $\alpha$ spikes while the rule is also applied 
+since the neuron closes immediately upon rule application. In transition $(s,(\alpha+\alpha', 
+\beta))$, the event $(\alpha+\alpha',\beta)$ represents two events: the reception of $\alpha$ spikes 
+and the application of a rule that consumes $\alpha'$ spikes and has action $\beta$. 
 
 %===================================================================================================
+
+We will call the set that contains some neuron $w$ 
+and all neurons \emph{connected to} neuron $w$, all neuron $x$ such that $(x,w) \in syn$, as the 
+\emph{neuron $w$ subsystem}. 
+
 
 Figure \ref{fig-nts-1} shows two neurons with their subsystems and their corresponding NTSs. For an
 NTS diagram, a state $s$ is drawn as a rectangle that contains the element of $s$. For the 
@@ -357,6 +369,33 @@ different NTSs.
 \end{figure}
 
 %===================================================================================================
+
+\begin{definition2}[Full Event Sequence]
+
+Let neuron $\sigma$ have the initial configuration $c_0 = (n_o/\mn 1)$ and neuron transition system 
+$nts=(S,V,\ra)$. Let spike train $st = a^{\alpha_0}a^{\alpha_1}\cdots a^{\alpha_t} \cdots$  be a 
+valid input spike train to neuron $\sigma$. In NTS terms, the input spike train $st$ can be viewed 
+as the \emph{input event sequence} $se_{input} = e_0,e_1,...,e_t,...$  $=(\alpha_0, \lambda),
+(\alpha_1,\lambda),...,(\alpha_t,\lambda),...$. A \emph{full event sequence} for a given neuron 
+$\sigma$  and input event sequence $se_{input}$ is an event sequence is: 
+$$se_{full} = e'_0,e'_1,...,e'_t,... = (\alpha'_0,\beta'_0),(\alpha'_1,\beta'_1),...,(\alpha'_t,
+\beta'_t),...$$ where, given the configuration $c_t = (n_t/d_t)$ and event $e_t = (\alpha_t,
+\lambda)$, $e'_t=(\alpha'_t, \beta'_t)$ and $c_{t+1}$ are defined in the following manner:
+\begin{itemize}
+   \item Case $A$: $d_t > 0$: $c_{t+1} = (n_t/d_t\mn 1)$ and $e'_t = (\alpha'_t,\beta'_t) = (0,\lambda)$.
+   \item Case $B$: $d_t = 0$: $c_{t+1} = (n_t+\alpha_t/d_t\mn 1)$ and $e'_t = (\alpha'_t,\beta'_t) = 
+         (\alpha_t,\lambda)$.
+   \item Case $C_1$: $d_t = \mn 1$: $c_{t+1} = (n_t+\alpha_t + \alpha/d\mn 1)$ and $e'_t =(\alpha'_t,
+         \beta'_t) = (\alpha_t+\alpha, \beta)$ \\ if $(s,(\alpha_t+\alpha, \beta ))\in \ra$, 
+         $n_t \in s$, $\beta = a^p\sm d$, and $d=0$.
+   \item Case $C_2$: $d_t = \mn 1$: $c_{t+1} = (n_t+ \alpha/d\mn 1)$ and $e'_t =(\alpha'_t,
+         \beta'_t) = (\alpha, \beta)$ \\ if $(s,(\alpha, \beta ))\in \ra$, $n_t \in s$, 
+         $\beta = a^p\sm d$, and $d>0$.
+\end{itemize}
+
+\end{definition2}
+
+%===================================================================================================
 \subsection{Operations on Neuron Transition Systems}\label{sec-homo-ops}
 %===================================================================================================
 
@@ -387,14 +426,15 @@ different rule sets.
 where:
 \begin{itemize}
    \item $S'=\{s+\delta\se|\se s \in S\}$. $s+\delta = \{i+\delta\se|\se i\in s\}$. We say that $s+
-         \delta$ is \emph{state $s$ translated by $\delta$}.
+         \delta$ is \emph{state $s$ translated by $\delta$} or is \emph{$delta$-translated state 
+         $s$}.
    \item $\ra'=\{t+\delta \se|\se t\in \ra \}$. If $t=(s, (\alpha,\beta))$, $t+\delta=(s+\delta,
-         (\alpha,\beta))$. We say that $t+\delta$ is \emph{transition $t$ translated by $\delta$}. 
-         The translation of a transition $t$ by $\delta$ is simply the translation of the state
-         component $s$ by $\delta$.
+         (\alpha,\beta))$. We say that $t+\delta$ is \emph{transition $t$ translated by $\delta$}
+         or is \emph{$\delta$-translated transition $t$}. $\delta$-transition of transition $t$ is 
+         simply the $\delta$-translation of the component $s$ of the transition.
 \end{itemize}
-We denote $nts'$ as $nts+\delta$. We say that $nts+\delta$ is the neuron transition system $nts$
-\emph{translated by $\delta$}.
+We denote $nts'$ as $nts+\delta$. We say that $nts+\delta$ is \emph{$nts$ translated by $\delta$} or
+is \emph{$\delta$-translated $nts$}.
 \end{definition2}
 
 %===================================================================================================
@@ -409,7 +449,8 @@ NTSs while neuron translation operates on neurons.
 \begin{definition2}[Neuron Translation]
 \emph{Neuron translation} is an operation on a neuron. It takes a neuron $\sigma=(n,R)$ and a
 natural number $\delta$ and produce the neuron $\sigma'=(n+\delta, R')$ where 
-$R'=\{a^{\delta}E/a^c \ra \beta\se|\se E/a^c\ra \beta \in R\}$.
+$R'=\{a^{\delta}E/a^c \ra \beta\se|\se E/a^c\ra \beta \in R\}$. We say that neuron $\sigma'$ is
+\emph{$\sigma$ translated by $\delta$} or is \emph{$\delta$-translated $\sigma$}.
 \end{definition2}
 
 %===================================================================================================
@@ -469,15 +510,16 @@ spike count $n+\delta$.
 where:
 \begin{itemize}
    \item $S'=\{\delta s\se|\se s \in S\}$. $\delta s = \{\delta i\se|\se i\in s\}$.
-         We say that $\delta s$ is \emph{state $s$ scaled by $\delta$}.
+         We say that $\delta s$ is \emph{state $s$ scaled by $\delta$} or is \emph{$\delta$-scaled 
+         state $s$}.
    \item $V'=\{(\delta \alpha,\beta)\se|\se (\alpha,\beta)\in V\}$.
    \item $\ra'=\{\delta t \se|\se t\in \ra \}$. If $t=(s, (\alpha,\beta))$, $\delta t=(\delta s,
          (\delta \alpha,\beta))$. We say that $\delta t$ is \emph{transition $t$ scaled by 
-         $\delta$}. The scaling transition $t$ by $\delta$ means scaling its state component $s$ and
-         $\alpha$ component by $\delta$.
+         $\delta$} or is \emph{$\delta$-scaled transition $t$}. $\delta$-scaling of transition $t$ 
+         means scaling its state component $s$ and $\alpha$ component by $\delta$.
 \end{itemize}
-We denote $nts'$ as $\delta\cdot nts$. We say that $\delta\cdot nts$ is the neuron transition system 
-$nts$ \emph{scaled by $\delta$}.
+We denote $nts'$ as $\delta\cdot nts$. We say that $\delta\cdot nts$ is $nts$ \emph{scaled by 
+$\delta$} or is \emph{$\delta$-scaled $nts$}.
 \end{definition2}
 
 %===================================================================================================
@@ -502,18 +544,19 @@ subsystem $sub'$ where:
          We call this regular expression operation as \emph{regular expression scaling}. \emph{Rule
          scaling} is the operation where you scale the rule's regular expression and scale the
          number of spikes the rule consumes by the same amount $\delta$.
-   \item if neuron $x$ is connected to neuron $\sigma$, then $\delta$ copies of neuron $x$ are
+   \item If neuron $x$ is connected to neuron $\sigma$, then $\delta$ copies of neuron $x$ are
          connected to neuron $\sigma'$ and all these $\delta$ copies of neuron $x$ are also in 
          subsystem $sub'$. 
 \end{itemize}
 
 In \emph{Type 2} subsystem scaling, $sub'$ also contains the same neuron $\sigma'=(\delta n,R')$ 
-described above. If in subsystem $sub$, neuron $x$ is connected to neuron $\sigma$, then neuron $x$
-will also be in subsystem $sub'$ and for each neuron $x$ there will be additional $\delta$ neurons
-called $x_1,..., x_{\delta}$ that have the same rule set with rules of the form $a^j\ra a^j$ where
-$j$ is a number of spikes a rule in neuron $x$ can produce. Instead of  neuron $x$ being connected 
-to neuron $\sigma'$, neuron $x$ will be connected to neurons $x_1,...,x_{\delta}$ while neurons 
-$x_1,...,x_{\delta}$ will be connected to neuron $\sigma'$.
+described above. Instead of having $\delta$ copies of neuron $x$ for each neuron $x$ connected to
+neuron $\sigma$, in type 2 subsystem scaling $sub'$ will include neuron $x$ and $\delta$ 
+\emph{multiplier neurons} $x_1,...,x_{\delta}$ for each neuron $x$. In the subsystem $sub'$,
+each neuron $x$ is connected to its multiplier neurons $x_1,...,x_{\delta}$ while all the multiplier
+neurons are connected to neuron $\sigma'$. Neurons $x_1,...,x_{\delta}$ will have the same rule set 
+with rules of the form $a^j\ra a^j$ where $j$ is a non-zero number of spikes a rule in neuron $x$ 
+can produce. 
 \end{definition2}
 
 %===================================================================================================
@@ -527,8 +570,25 @@ $(\{2i\delta\}_{i\geq 0},(\delta,\lambda))$, $(\{2i\delta\}_{i\geq 0},(2\delta,\
 transitions in the NTS in Figure \ref{fig-nts-4} are all $\delta$-scaled versions of transitions in
 the NTS in Figure \ref{fig-nts-1b}.
 
-Figure \ref{fig-nts-4a} shows neuron $w'$ subsystem which that is the result of a type 1 subsystem 
-$\delta$-scaling of the neuron $w$ subsystem in Figure \ref{fig-nts-1b}.
+Figure \ref{fig-nts-4a} shows neuron $w'$ subsystem which is the result of type 1 subsystem 
+$\delta$-scaling of the neuron $w$ subsystem in Figure \ref{fig-nts-1b}. The neuron $w$ subsystem
+in Figure \ref{fig-nts-1b} includes neuron $w$ with rules $a(a^2)^*/a^3\ra a$ and $a \ra\lambda$ and
+neurons $x$ and $y$ connected to neuron $w$. The neuron $w'$ subsystem in Figure \ref{fig-nts-4a} 
+includes neuron $w'$ with rules $a^{\delta}(a^{2\delta})^*/a^3\ra a$ and $a^{\delta}\ra \lambda$, 
+$\delta$ copies of neuron $x$ all connected to neuron $w'$, and $\delta$ copies of neuron $y$ all
+connected to neuron $w'$. The rules in neuron $w'$ are all $\delta$-scaled rules of neuron $w$. The 
+initial number of spikes in neuron $w'$ should be $\delta$ times that of the initial number of 
+spikes of neuron $w$ but since neuron $w$ has $0$ initial spikes neuron $w'$ also has $0$ initial 
+spikes.
+
+Figure \ref{fig-nts-4b} shows another neuron $w'$ subsystem which is the result of type 2 subsystem
+$\delta$-scaling of the neuron $w$ subsystem in Figure \ref{fig-nts-1b}. The neuron $w'$ in this
+subsystem is identical to the neuron $w'$ in Figure \ref{fig-nts-4a}. The neuron $w'$ subsystem
+in Figure \ref{fig-nts-4b} includes neuron $x$ with its multiplier neurons $x_1,...,x_\delta$ and
+neuron $y$ with its multiplier neurons $y_1,...,y_\delta$. The rules in neurons $x_1,...,x_\delta$ 
+have the form $a^i \ra a^i$ where $i$ is a number of spikes neuron $x$ can produce while rules
+in neurons $y_1,...,y_\delta$ have the form $a^k\ra a^k$ where $k$ is a number of spikes neuron $y$
+can produce.
 
 %===================================================================================================
 
@@ -554,120 +614,276 @@ $\delta$-scaling of the neuron $w$ subsystem in Figure \ref{fig-nts-1b}.
 \subsection{Procedures for Homogenizing Neurons' Rule Sets}\label{sec-homo-algo}
 %===================================================================================================
 
-SECTION INTRO PARAGRAPH
-
-\begin{definition2}[Rule Transitions]
-A rule set $R$ is a set of rules $\{r_1,...,r_i,...,r_n\}$ where each rule $r_i$ has the form 
-$(s_i,a_i)$. For rule $r_i=(s_i,a_i)$, $s_i$ is called the state while $a_i$ is called action.
-The \emph{scope} of a rule set $R=\{(s_1,a_1),...,(s_n,a_n)\}$, denoted by $scope(R)$, is the state 
-$s = s_1 \cup s_2 \cup \cdots \cup s_n$.
+\begin{definition2}[Rule Transition Set]
+Given a neuron transition system $nts=(S,V,\ra)$, the \emph{rule transition set} $R$ of $nts$ is a
+subset of the transition relation $\ra$ that contains only those transitions that represent rules.
+Let $R=\{r_1,...,r_i,...,r_n\}$ be a rule transition set. Recall that $r_i \in R$ is a (rule) 
+transition that has the form $(s_i,e_i)$ where $s_i$ is a state and $e_i$ is an event $(\alpha_i,
+\beta_i)$. The \emph{scope} of a rule transition set $R=\{(s_1,e_1),...,(s_n,e_n)\}$, denoted by 
+$scope(R)$, is the state $s_1 \cup s_2 \cup \cdots \cup s_n$.
 \end{definition2}
 
-SHORT INFO ON RULE SET, why rule set
+%===================================================================================================
 
-\begin{definition2}[State-Actions Pair]
-Given a rule set $R=\{(s_1,a_1),...,(s_n,a_n)\}$, we can associate a set of actions to any spike 
-count $c$ in the scope of the rule set $R$. Let spike count $c$ be in the scope of $R$, $c\in 
-scope(R)$, the actions associated with spike count $c$, denoted by $act(c)$, is the set 
-$\{a_i\se |\se (s_i,a_i) \in R, c\in s_i\}$. We say that ``$act(c)$ is the set of actions at spike
-count $c$". A set of actions can also be associated with a set of spike counts instead of simply
-being associated with a single count. We say that set of spike counts $C$ is associated with actions
-$act(C)$ if for all $c \in C$ the actions $act(c)$ at spike count $c$ is equal to $act(C)$. i.e. All
-spike counts in $C$ have the same set of actions.
-spike count,
+\begin{definition2}[Partition-Events Set] 
+A \emph{partition-events set} is another way of representing a rule transition set. Given a rule
+transition set $R=\{(s_1,e_1),...,$ $(s_n,e_n)\}$, a partition-events set $P$ of $R$ is some set
+$\{(p_1,\ee_1),...,(p_m,\ee_m)\}$ where:
+\begin{itemize}
+   \item The set of states $p_1,...,p_m$ is a \emph{partition} of $scope(R)$. i.e. $scope(R)=
+         p_1 \cup \cdots \cup p_m$ and for any $p_i,p_j \in \{p_1,...,p_m\}$, $p_i 
+         \cap p_j = \emptyset$. All states in the partition are non-empty.
+   \item If $n \in scope(R)$ is some spike count, the set $events(n)$ is the set of events that can
+         occur when the neuron has $n$ spikes. i.e. $events(n) = \{e\se|\se (s,e)\in R, n\in s\}$.
+   \item For each $(p_i, \ee_i) \in P$, $\ee_i = events(n)$ where $n \in p_i$ and for any other 
+         $n' \in p_i$, $events(n')=\ee_i$. All spike counts in $p_i$ have the same set of events
+         $\ee_i$.
+   \item $scope(P) = scope(R)$.
+\end{itemize}
 \end{definition2}
+%===================================================================================================
 
-MOTIVATION EXAMPLES
-
-\begin{definition2}[Partition-Actions Set]
-DEF
-\end{definition2}
-
-
-For example, $R = \{(s_1,a_1),(s_2,a_2),(s_3,a_3)\}$
-$A = s_1\backslash (s_2 \cap s_3)$ 
-$B = s_2\backslash (s_1 \cap s_3)$ 
-$C = s_3\backslash (s_1 \cap s_2)$ 
-$D = (s_1 \cup s_2 ) \backslash s_3$ 
-$E = (s_1 \cup s_3 ) \backslash s_2$ 
-$F = (s_2 \cup s_3 ) \backslash s_1$ 
-$G = (s_1 \cup s_2 \cup s_3 )$ 
+Figure \ref{fig-partition-1} is a visualization of a partition-events set of the rule transition
+set $R = \{(s_1,e_1),(s_2,e_2),(s_3,e_3)\}$. $scope(R) = s_1 \cup s_2 \cup s_3$ is partitioned into
+the following subsets/states:
+$J = s_1\backslash (s_2 \cup s_3)$,
+$K = s_2\backslash (s_1 \cup s_3)$, 
+$L = s_3\backslash (s_1 \cup s_2)$, 
+$M = (s_1 \cap s_2 ) \backslash s_3$, 
+$N = (s_1 \cap s_3 ) \backslash s_2$, 
+$O = (s_2 \cap s_3 ) \backslash s_1$ 
+$Q = (s_1 \cap s_2 \cap s_3 )$.
+If any of the states is empty, then it will not be in the partition. The partition-events set $P$
+of $R$ is the set $\{(J,\ee_1),(K,\ee_2),$ $(L,\ee_3),(M,\ee_4),$ $(N,\ee_5),(O,\ee_6),(Q,\ee_7)\}$ 
+where 
+$\ee_1 = \{e_1\}$,
+$\ee_2 = \{e_2\}$,
+$\ee_3 = \{e_3\}$,
+$\ee_4 = \{e_1,e_2\}$,
+$\ee_5 = \{e_1,e_3\}$,
+$\ee_6 = \{e_2,e_3\}$, and
+$\ee_7 = \{e_1,e_2,e_3\}$. $P$ is a valid partition-events set because the states $J,K,L,M,N,O,Q$
+form a partition of $scope(R)$ and for any element $(s,\ee)\in  P$ for all $n\in s$, $events(n)=\ee$.
+i.e. For $(M,\ee_4) = ((s_1 \cup s_2)\backslash s_3,\{e_1,e_2\})$, all elements of $M$ are from the 
+subset of the intersection $s_1 \cap s_2$, the subset that does not contain elements from $s_3$. 
+This means for any $n \in M$, $events(n) = \{e_1,e_2\} = \ee_4$ since $n\in s_1$ and $n\in s_2$ and 
+either of the  rule transition $(s_1,e_1)$ or rule transition $(s_2,e_2)$ can be used. For any 
+element $n\in M$, the set of events that can occur at spike count $n$ is $\ee_4$.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.35]{fig-partitions-1.pdf}
-    \caption{Partitions and Actions}
+    \includegraphics[scale=0.45]{fig-partitions-1.pdf}
+    \caption{Partition and Events}
     \label{fig-partition-1}
 \end{figure}
 
-ELABORATE AND GIVE EXAMPLES(3)
+%===================================================================================================
+
+\begin{definition2}[Translation and Scaling of a Partition-Events Set]
+\emph{Partition-events set translation} is an operation on a partition-events set. It takes a 
+partition-events set $P=\{...,(p,\ee),...\}$ and a natural number $\delta$ and produce the 
+partition-events set $P'$ where:
+\begin{itemize}
+   \item For each $(p,\ee)\in P$, $(p+\delta,\ee) \in P'$. We denote $P'$ as $P+\delta$ and we say 
+         that $P'$ is \emph{$P$ translated by $\delta$}.
+\end{itemize}
+\emph{Partition-events set scaling} is an operation on a partition-events set. It takes a 
+partition-events set $P=\{...,(p,\ee),...\}$ and a natural number $\delta$ and produce the 
+partition-events set $P'$ where:
+\begin{itemize}
+   \item For each $(p,\ee)\in P$, $(\delta p,\ee') \in P'$ where $\ee'=\{(\delta\alpha,\beta)\se|\se
+         (\alpha,\beta)\in \ee\}$. We denote $P'$ as $\delta P$ and we say that $P'$ is \emph{$P$ 
+         scaled by $\delta$}.
+\end{itemize}
+\end{definition2}
+
+%===================================================================================================
+
+\begin{definition2}[Compatibility of Two Partition-Eventss Sets] Two partition-events sets, 
+$P=\{...,(p_i,\ee_i),...\}$ and $P'=\{...,(p'_j,\ee'_j),...\}$, are \emph{compatible} if for all 
+$n \in scope(P) \cap scope(P')$ there is a $(p_i, \ee_i)\in P$ and a $(p'_j,\ee'_j) \in P'$ such 
+that  $n \in p_i$, $n\in p'_j$, and $\ee_i=\ee'_j$.
+\end{definition2}
+
 %===================================================================================================
 
 \begin{algorithm}[H]
 \SetAlgoLined
 \SetKwInput{KwInput}{Input}
 \SetKwInput{KwOutput}{Output}
-\KwInput{$R = \{(s_1,a_1),...,(s_n,a_n)\}$}
-\KwOutput{$P = \{(p_1,A_1),...,(p_m,A_m)\}$}
-$P \leftarrow \{\}$\;
+\KwInput{$R = \{(s_1,e_1),...,(s_n,e_n)\}$}
+\KwOutput{$P = \{(p_1,\ee_1),...,(p_m,\ee_m)\}$}
+$P' \leftarrow \{\}$\;
 \For{each $T \subseteq R$}
 {
-   $S   \leftarrow \{s_k \se|\se (s_k,a_k) \in T\}$             \;
-   $S'  \leftarrow \{s_l \se|\se (s_l,a_l) \in R\backslash T\}$ \;
-   $A_i \leftarrow \{a_k \se|\se (s_k,a_k) \in T\}$             \; 
-   $p_i \leftarrow \Big(\bigcap\limits_{s_k \in  S} s_k \Big)  
+   $T'\leftarrow  R\backslash T$\;
+   $S \leftarrow \{s \se|\se (s,e) \in T\}$             \;
+   $S'\leftarrow \{s \se|\se (s,e) \in T'\}$ \;
+   $\ee' \leftarrow \{e \se|\se (s,e) \in T\}$             \; 
+   $p' \leftarrow \Big(\bigcap\limits_{s \in  S} s \Big)  
                    \Big\backslash 
-                   \Big(\bigcup\limits_{s_l \in S'} s_l \Big)$   \;
-   \If{$p_i \neq \varnothing$}
+                   \Big(\bigcup\limits_{s' \in S'} s' \Big)$   \;
+   \If{$p' \neq \emptyset$}
    {
-      Add $(p_i, A_i)$ to $P$ \;
+      Add $(p', \ee')$ to $P'$ \;
    }
 }
-
-\For{each $(p_x,A_x),(p_y,A_y) \subseteq P$}
+$P \leftarrow \{\}$\;
+$EV  \leftarrow \{\ee' \se|\se (p',\ee') \in P' \}$ \; 
+\For{each $\ee' \in EV$}
 {
-   \If{$A_x = A_y$}
+   $p \leftarrow \{\}$\;
+   \For{each $(p'_i,\ee'_i) \in P'$}
    {
-      Remove $(p_x,A_x)$ and $(p_y,A_y)$ from $P$\;
-      Add $(p_x \cup p_y, A_x)$ to $P$ \;
+      \If{$\ee'_i = \ee'$}
+      {
+         $p \leftarrow p \cup p'_i$ \;
+      }
    }
+   Add $(p,\ee')$ in $P$ \;
 }
-\caption{$GetPartitionActionsSet(R):$ \\Get the Partition-Actions Set that corresponds to rule
-        transition set $R$}
+\caption{$PartitionEventsSet(R):$}
 \end{algorithm}
 
 %===================================================================================================
 
-\begin{definition2}[Compatibility of Two Partition-Actions Sets] Two partition-actions sets, 
-$P=\{(p_i,A_i)\}$ and $P'=\{(p'_j,A'_j)\}$, are compatible if for all $c \in scope(P) \cup 
-scope(P')$ there is a $(p_i, A_i)\in P$ and a $(p'_j,A'_j) \in P'$  such that $c\in p_i$,
-$c\in p'_j$, and $A_i=A'_j$.
-\end{definition2}
+DISCUSS ALGORITHM
+
+PROVE CORRECTNESS
+
 %===================================================================================================
 
 \begin{algorithm}[H]
 \SetAlgoLined
 \SetKwInput{KwInput}{Input}
 \SetKwInput{KwOutput}{Output}
-\KwInput{$P = \{(p_1,A_1),...,(p_n,A_n)\}, P' = \{(p'_1,A'_1),...,(p'_m,A'_m)\}$}
+\KwInput{$P_1 = \{(p_1,\ee_1),...,(p_n,\ee_n)\}, P_2 = \{(p'_1,\ee'_1),...,(p'_m,\ee'_m)\}$}
 \KwOutput{True or False}
-$s  \leftarrow scope(P)$\;
-$s' \leftarrow scope(P')$\;
-$P  \leftarrow \{(p_1\cap s', A_1),...,(p_n\cap s', A_n)\}$\;
-$P' \leftarrow \{(p'_1\cap s, A'_1),...,(p'_n\cap s, A'_m)\}$\;
-\eIf{$P = P'$}
+$sp_1  \leftarrow scope(P_1)$\;
+$sp_2  \leftarrow scope(P_2)$\;
+$P'_1  \leftarrow \{(p_1\cap sp_2, \ee_1),...,(p_n\cap sp_, \ee_m)\}$\; 
+\tcp{if $p_i \cap sp_2 = \emptyset$, exclude $(p_i \cap sp_1,\ee_i)$ from $P'_1$}
+$P'_2  \leftarrow \{(p'_1\cap sp_1, \ee'_1),...,(p'_n\cap sp_1, \ee'_m)\}$\;
+\tcp{if $p'_i \cap sp_1 = \emptyset$, exclude $(p'_i \cap sp_1,\ee'_i)$ from $P'_2$}
+\eIf{$P'_1 = P'_2$}
 {
-   return true;
+   return True;
 }
 {
-   return false;
+   return False;
 }
-\caption{$Compatible(P,P')$\\
-Return $true$ if partition-actions set $P$ is compatible with partition-actions set $P'$}
+\caption{$Compatible(P_1,P_2)$}
 \end{algorithm}
+
+%===================================================================================================
+
+DISCUSS ALGORITHM
+
+PROVE CORRECTNESS
 
 
 %===================================================================================================
+
+DISCUSS ALGORITHM
+
+PROVE CORRECTNESS
+
+%===================================================================================================
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\SetKwInput{KwInput}{Input}
+\SetKwInput{KwOutput}{Output}
+\KwInput{$(p,\ee), (p',\ee')$}
+\KwOutput{Solutions $\{...,(u,v),...\}$ or `no match'}
+$min_1 \leftarrow min(\{\alpha\se|\se (\alpha,\beta) \in \ee)\})$\;
+$min_2 \leftarrow min(\{\alpha'\se|\se (\alpha',\beta') \in \ee')\})$\;
+$\overline{\ee}  \leftarrow \{(\alpha/{min_1},\beta))\se|\se (\alpha,\beta)\in \ee\}$\;
+$\overline{\ee'} \leftarrow \{(\alpha'/{min_2},\beta'))\se|\se (\alpha',\beta')\in \ee'\}$\;
+   $min_2  \leftarrow min(cons(\ee'))$\;
+   \eIf{$\overline{\ee}=\overline{\ee'}$}
+   {
+      \tcc{This homogeneous linear diophantine equation can be solved using with help of Eclid's GCD
+           algorithm}
+      Solve $min_1 u = min_2v$\;
+      \eIf{$ min_1u = min_2v$ has solutions}
+      {
+         return $\{...,(u,v),...\}$\; 
+         \tcp{$\{...,(u,v),...\}$ stands for a set of solutions}
+      }
+      {
+         return $\emptyset$\;
+      }
+   }
+   {
+      return $\emptyset$\;
+   }
+\caption{$PossibleMatch((p,\ee),(p',\ee'))$}
+\end{algorithm}
+
+%===================================================================================================
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\SetKwInput{KwInput}{Input}
+\SetKwInput{KwOutput}{Output}
+\KwInput{$R,R'$}
+\KwOutput{$R''$}
+$P \leftarrow PartitionEventsSet(R)$\;
+$P' \leftarrow PartitionEventsSet(R')$\;
+\tcp{$P= \{(p_1,\ee_1),...,(p_i,\ee_i),...,(p_n,\ee_n)\}$;}
+\tcp{$P'= \{(p'_1,\ee'_1),...,(p'_j,\ee'_j),...,(p'_m,\ee'_m)\}$;}
+
+%   $\mathbb{E}   \leftarrow \{\ee_i\se|\se (p_i,\ee_i) \in P\}$\;
+%   $\mathbb{E}'  \leftarrow \{\ee'_i\se|\se (p'_j,\ee'_j) \in P'\}$\;
+%:   $\mathbb{E}'' \leftarrow \mathbb{E} \cap \mathbb{E}'$\;
+
+\For{$(p,\ee)\in P$}
+{
+   \For{$(p',\ee')\in P'$}
+   {
+      $M \leftarrow PossibleMatch((p,\ee),(p',\ee'))$\;
+      \eIf{$M = \emptyset$}
+      {
+         continue\;
+      }
+      {
+         $(u,v) \in M$\;
+         \eIf{$Compatible(uP,vP')=False$}
+         {
+            Solve $Compatible(uP+x,vP'+y)=True$\; 
+         }
+         {
+            $R''\leftarrow uR \cup vR'$\;
+         }
+      }
+   }
+} 
+  
+return $R''$\;
+\caption{$Merge(R,R')$}
+\end{algorithm}
+
+\begin{itemize}
+\item $action(\ee) = \{ \beta \se|\se (\alpha,\beta) \in \ee\}$.
+\item $consumption(\ee) = \{ \alpha \se|\se (\alpha,\beta) \in \ee\}$.
+\item Example: $\ee_i = \{(-1,\lambda),(-2,a)\}$.
+\item Example: $\ee'_j = \{(-2,\lambda),(-4,a)\}$.
+\item $action(\ee_i)=\{\lambda, a\}$. $consumption(\ee_i)=\{-1,-2\}$.
+\item $action(\ee'_i)=\{\lambda, a\}$. $consumption(\ee'_i)=\{-2,-4\}$.
+\item Example: $\ee_k = \{(-1,a),(-2,\lambda)\}$.
+\item Example: $\ee'_l = \{(-1,\lambda),(-2,a)\}$.
+\item $action(\ee_k)=\{\lambda, a\}$. $consumption(\ee_k)=\{-1,-2\}$.
+\item $action(\ee'_l)=\{\lambda, a\}$. $consumption(\ee_k)=\{-1,-2\}$.
+\end{itemize}
+%===================================================================================================
+
+DISCUSS ALGORITHM
+
+PROVE CORRECTNESS
+
+%===================================================================================================
+
 \begin{algorithm}[H]
 \SetAlgoLined
 \SetKwInput{KwInput}{Input}
@@ -683,49 +899,6 @@ return $R_0$\;
 \caption{Homogenization Algorithm}
 \end{algorithm}
 
-%===================================================================================================
-\begin{algorithm}[H]
-\SetAlgoLined
-\SetKwInput{KwInput}{Input}
-\SetKwInput{KwOutput}{Output}
-\KwInput{$R_x,R_y$}
-\KwOutput{$R_z$}
-Convert rule set $R_x$ to partition-actions set $P_x$\;
-Convert rule set $R_y$ to partition-actions set $P_y$\;
-\eIf{$P_x$ is compatible with $P_x$}
-{
-   $R_Z \leftarrow R_x \cup R_y$\;
-}
-{
-   Match $P_x$ and $P_y$\; 
-   \For{each $(p_i,A_i) \in P_x$ and each $(p_j,A_j) \subseteq P_y$}
-   {
-   }
-}
-return $R_Z$\;
-\caption{Merging Two Rule Sets}
-\end{algorithm}
-
-
-%===================================================================================================
-\begin{algorithm}[H]
-\SetAlgoLined
-\SetKwInput{KwInput}{Input}
-\SetKwInput{KwOutput}{Output}
-\KwInput{$(p,A=(\alpha,\beta)),(p',A'=(\alpha',\beta'))$}
-\KwOutput{(matching parameters)/no match}
-
-\eIf{$\beta \neq \beta'$}
-{
-   return `no match'\;
-}
-{
-   Solve $u_1\alpha+v_1=u_2\alpha'+v_2$\;
-   //This linear diophantine equation is solved using Euclidean GCD algorithm\;
-}
-return $(u_1,v_1,u_2,v_2)$\;
-\caption{Matching of Two Partition-Actions Pairs}
-\end{algorithm}
 
 %===================================================================================================
 \section{Remarks and Conclusions}\label{sec-rem-con}
